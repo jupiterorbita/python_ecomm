@@ -9,12 +9,25 @@ import bcrypt
 def index(request):
     if 'products' not in request.session:  # May not need this if no add to cart on main page
         request.session['products'] = {}
+        products = request.session['products']
+        cart_items = 0
+    # context = {
+    #     'cart': cart_items
+    # }
     return render(request, 'index.html')
 
 
 def displayProduct(request, product_id):
     # maybe add if inventory = 0 -- return out of stock page
-    return render(request, '')  # which html page template?
+    product = Product.objects.get(id=product_id)
+    products = request.session['products']
+    category = product.category
+    context = {
+        'this_product': product,
+        'similar_items':  category,
+        'cart': len(products)
+    }
+    return render(request, '', context)  # which html page template?
 
 
 def addToCart(request, product_id, quantity):
@@ -30,7 +43,26 @@ def addToCart(request, product_id, quantity):
         message.INFO,
         f'{quantity} items added to your cart.'
     )
-    return redirect('')
+
+    return redirect(f'/products/show/{product_id}')
+
+
+def orderInfoForm(request):
+    # cart = session.request['products']
+
+    # total =
+    # for item in cart:
+    #     Product.objects.get(item)
+
+    # # context = {
+    # #     'items': cart.keys(),
+    # #     'price':,
+    # #     'quantity': cart.values(),
+    # #     'total':,
+    # #     'cart': len(products)
+
+    # # }
+    pass
 
 
 def createOrder(request):
@@ -88,7 +120,6 @@ def log_in(request):
 def log_out(request):
     request.session.clear()
     return redirect('/admin/login')
-
 
 
 # ------------ADMIN FUNCTIONS----------------------------
@@ -162,7 +193,10 @@ def editProduct(request, product_id):
     this_user = User.objects.get(id=user_id)
     this_product = Product.objects.get(id=product_id)
 
-    if key in this_product:
+    post_keys = request.POST.keys()
+
+    if key in post_keys:
+        # make sure names in html match model field names
         this_product.key = request.session['key']
     this_product.save()
 
@@ -174,11 +208,14 @@ def displayPreview(request, product_id):
         messages.error(request, "Please log in.")
         return redirect('/')
     context = {
-        preview_name = request.POST['name'],
-        preview_desc = request.POST['desc'],
-        preview_category = request.POST['cat'],
-        preview_image = request.POST['img'],
-        preview_price = request.POST['price']
+        'preview_name': request.POST['name'],
+        'preview_desc': request.POST['desc'],
+        'preview_category': request.POST['cat'],
+        'preview_image': request.POST['img'],
+        'preview_price': request.POST['price']
     }
     return render(request, 'previewProduct.html', context)
 
+
+def displayOrder(request):
+    pass
